@@ -75,6 +75,7 @@ int robInitWindow(void);
 void robCloseWindow(void);
 void robUpdateWindow(void);
 float robGetspf(void);
+void robCheckExit(void);
 // Внутреннее API робота
 
 unsigned int fps_deltaclocks = 1;
@@ -362,7 +363,7 @@ int main(int argc,char *argv[])
 		} 
 	}
 
-	if(WaitForSingleObject(robothread, 0) != WAIT_OBJECT_0)
+	if(WaitForSingleObject(robothread, 500) != WAIT_OBJECT_0)
 		TerminateThread(robothread, 0);
 
 	CloseHandle(robothread);
@@ -394,24 +395,27 @@ float _cdecl robot_move(float pathlen, float speed)
 	float resultpathlen = 0;
 
 	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		if(speed > 30) speed = 30;
 		if(speed <-30) speed = -30;
 		room.robot_speed = speed;
 		room.robot_pathlen = pathlen;
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
 		while(1) {
-			WaitForSingleObject(ghMutex, INFINITE);
-			if(room.robot_fall) {
+			if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+				robCheckExit();
+				if(room.robot_fall) {
+					ReleaseMutex(ghMutex);
+					break;
+				}
+				if(room.robot_pathlen == 0.0) {
+					resultpathlen = room.robot_resultpathlen;
+					room.robot_resultpathlen = 0;
+					ReleaseMutex(ghMutex);
+					break;
+				}
 				ReleaseMutex(ghMutex);
-				break;
 			}
-			if(room.robot_pathlen == 0.0) {
-				resultpathlen = room.robot_resultpathlen;
-				room.robot_resultpathlen = 0;
-				ReleaseMutex(ghMutex);
-				break;
-			}
-			ReleaseMutex(ghMutex);
 		}
 	}
 
@@ -420,7 +424,8 @@ float _cdecl robot_move(float pathlen, float speed)
 
 void _cdecl robot_rotate(float angle)
 {
-	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		room.robot_angle += angle;
 		robEcholocation(); // Пользователь может вызвать robot_getecholocator до того, как вызовется функция robEcholocation();, поэтому нужно вызвать robEcholocation(); сейчас
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
@@ -429,7 +434,8 @@ void _cdecl robot_rotate(float angle)
 
 void _cdecl robot_startcleaning(void)
 {
-	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		room.robot_cleaning = true;
 		robEatDust(); // Пользователь может вызвать robot_getdirtsensor или robot_endcleaning до того, как будет вызвана robEatDust();, лучше вызвать сразу
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
@@ -438,7 +444,8 @@ void _cdecl robot_startcleaning(void)
 
 void _cdecl robot_endcleaning(void)
 {
-	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		room.robot_cleaning = false;
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
 	} 
@@ -448,7 +455,8 @@ unsigned int _cdecl robot_getdirtsensor(void)
 {
 	unsigned int dirtsensor = 0;
 
-	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		dirtsensor = room.robot_dirtsensor;
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
 	} 
@@ -460,7 +468,8 @@ unsigned int _cdecl robot_getpitssensor(void)
 {
 	unsigned int pitssensor = 0;
 
-	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) {
+		robCheckExit();
 		pitssensor = room.robot_pitssensor;
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
 	} 
@@ -473,6 +482,7 @@ unsigned int _cdecl robot_getecholocator(void)
 	unsigned int echolocator = 0;
 
 	if(WaitForSingleObject(ghMutex, INFINITE) == WAIT_OBJECT_0) { 
+		robCheckExit();
 		echolocator = room.robot_echolocator;
 		if(!ReleaseMutex(ghMutex)) printf("mutex error\n");
 	} 
@@ -487,6 +497,15 @@ DWORD WINAPI robStart(LPVOID lpParam)
 	robotfunc();
 
 	return TRUE; 
+}
+
+void robCheckExit(void)
+{
+	if(exitmsg) {
+		ReleaseMutex(ghMutex);
+
+		ExitThread(0);
+	}
 }
 
 void robUpdatePitsSensor(void)
