@@ -791,10 +791,10 @@ int robLoadFont(void)
 {
 	unsigned char *fontdata;
 	
-	if(!bmpLoad("media/ackfont.bmp", 192, 72, 3, &fontdata))
+	if(!bmpLoad("media/deffont.bmp", 256, 128, 3, &fontdata))
 		return 0;
 
-	fonttexid = robLoadTexture(192, 72, 3, fontdata);
+	fonttexid = robLoadTexture(256, 128, 3, fontdata);
 
 	free(fontdata);
 
@@ -812,17 +812,29 @@ void robPrintText(char *text, unsigned int x, unsigned int y)
 
 	glLoadIdentity(); 
 
-	glTranslatef(x, y, 0.0f);
+	glTranslatef((GLfloat)x, (GLfloat)y, 0.0f);
 	
 	glBindTexture(GL_TEXTURE_2D, fonttexid);
 
 	for(i = 0; i < strlen(text); i++) {
+		unsigned int c;
+
+		c = text[i];
+
 		glBegin(GL_QUADS);
 			glColor4f(1.0,1.0,1.0,1.0);
-			glTexCoord2f((text[i]%32)/32.0, (8-text[i]/32)/8.0); glVertex3f(i*6, 0, 0); // Может для х сделать обратно
-			glTexCoord2f((text[i]%32+1)/32.0, (8-text[i]/32)/8.0); glVertex3f(i*6+6, 0, 0);
-			glTexCoord2f((text[i]%32+1)/32.0, (8-text[i]/32-1)/8.0); glVertex3f(i*6+6, 9, 0);
-			glTexCoord2f((text[i]%32)/32.0, (8-text[i]/32-1)/8.0); glVertex3f(i*6, 9, 0);
+			if(c > 32) {
+				c -= 33;
+				glTexCoord2f((c%16)/16.0, (8-c/16)/8.0); glVertex3f((GLfloat)i*16, 0, 0); // Может для х сделать обратно
+				glTexCoord2f((c%16+1)/16.0, (8-c/16)/8.0); glVertex3f((GLfloat)i*16+16, 0, 0);
+				glTexCoord2f((c%16+1)/16.0, (8-c/16-1)/8.0); glVertex3f((GLfloat)i*16+16, 16, 0);
+				glTexCoord2f((c%16)/16.0, (8-c/16-1)/8.0); glVertex3f((GLfloat)i*16, 16, 0);
+			} else {
+				glTexCoord2f(0.0, 0.0); glVertex3f((GLfloat)i*16, 0, 0); // Может для х сделать обратно
+				glTexCoord2f(0.0, 0.0); glVertex3f((GLfloat)i*16+16, 0, 0);
+				glTexCoord2f(0.0, 0.0); glVertex3f((GLfloat)i*16+16, 16, 0);
+				glTexCoord2f(0.0, 0.0); glVertex3f((GLfloat)i*16, 16, 0);
+			}
 		glEnd();
 	}
 }

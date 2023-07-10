@@ -1,0 +1,3 @@
+1024 512
+512.0 256.0 3.14
+maps\map1_coll.bmp maps\map1_dirt.bmp maps\map1_pits.bmp
