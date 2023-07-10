@@ -21,7 +21,7 @@ unsigned int (_cdecl *robot_getecholocator)(void);
 
 extern void _cdecl newmain(void);
 
-extern "C" __declspec(dllexport) void setvisualapi(VISUAL_API visual_api)
+extern "C" __declspec(dllexport) void _cdecl setvisualapi(VISUAL_API visual_api)
 {	
 	robot_move = visual_api.robot_move;
 	robot_rotate = visual_api.robot_rotate;

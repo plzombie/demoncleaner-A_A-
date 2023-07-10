@@ -147,7 +147,7 @@ int main(int argc,char *argv[])
 	if(!dllhandle) { printf("\nerror!!!11\n"); return 11; }
 	setvisualapi = (void(_cdecl *)(VISUAL_API))GetProcAddress(dllhandle, "setvisualapi");
 	if(!setvisualapi) {
-		setvisualapi = (void(_cdecl *)(VISUAL_API))GetProcAddress(dllhandle, "setvisualapi_");
+		setvisualapi = (void(_cdecl *)(VISUAL_API))GetProcAddress(dllhandle, "_setvisualapi");
 
 		if(!setvisualapi) {
 			FreeLibrary(dllhandle);
@@ -158,7 +158,7 @@ int main(int argc,char *argv[])
 
 	robotfunc = (void(_cdecl *)(void))GetProcAddress(dllhandle, "robotfunc");
 	if(!robotfunc) {
-		robotfunc = (void(_cdecl *)(void))GetProcAddress(dllhandle, "robotfunc_");
+		robotfunc = (void(_cdecl *)(void))GetProcAddress(dllhandle, "_robotfunc");
 
 		if(!robotfunc) {
 			FreeLibrary(dllhandle);
