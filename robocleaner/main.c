@@ -727,7 +727,7 @@ unsigned int robLoadTexture(unsigned int sizex, unsigned int sizey, unsigned int
 	}
 
 	if(bpp == 3) {
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, sizex, sizey, 0, GL_RGB, GL_UNSIGNED_BYTE, buf);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, sizex, sizey, 0, GL_BGR, GL_UNSIGNED_BYTE, buf);
 	} else {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, sizex, sizey, 0, GL_BGRA, GL_UNSIGNED_BYTE, buf);
 	}
